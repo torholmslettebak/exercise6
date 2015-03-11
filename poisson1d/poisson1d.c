@@ -5,13 +5,43 @@
 // #include "solvers.h"
 #include "poissoncommon.h"
 
+double alpha=0.1;
+
+double exact(double x)
+{
+	return x*(pow(x,5.0)-1.0);
+}
+
+double source(double x)
+{
+	return 1;
+	// return -30*pow(x,4.0);
+}
+
+void DiagonalizationPoisson1Dfst(Vector u, const Vector lambda)
+{
+	Vector btilde = createVector(u->len);
+	Vector buf = createVector(4*(u->len+1));
+	int i;
+	int N=u->len+1;
+	int NN=4*N;
+	copyVector(btilde, u);
+	fst(btilde->data, &N, buf->data, &NN);
+	for (i=0;i<btilde->len;++i)
+		btilde->data[i] /= (lambda->data[i]+alpha);
+	fstinv(btilde->data, &N, buf->data, &NN);
+	copyVector(u, btilde);
+	freeVector(btilde);
+	freeVector(buf);
+}
 
 int main(int argc, char** argv)
 {
 	// will try to do this with fst based approach
 	int N, flag;
 	double time, h, tol=1e-4;
-	Vector grid;
+	Vector grid, b, e, lambda=NULL;
+	Matrix Q;
 	if (argc < 3) 
 	{
 		printf("need two parameters, N and flag [and tolerance]\n");
@@ -51,5 +81,45 @@ int main(int argc, char** argv)
 	// creates a equidistance grid, a vector for 1d case
 	// we will use standard x0 = 0 and X1 = 1
 	grid = equidistantMesh(0.0, 1.0, N);
+
+	b = createVector(N-1);
+	e = createVector(N-1);
+	evalMeshInternal(b, grid, source);
+	printf("the grid\n");
 	printVector(grid);
+	printf("the b vector\n");
+	printVector(b);
+	printf("\n");
+	evalMeshInternal(e, grid, exact);
+	scaleVector(b, pow(h, 2));
+	axpy(b, e, alpha);
+	// printf("The b vector\n");
+	// printVector(b);
+	// printf("The e vector\n");
+	// printVector(e);
+	if (flag >= 0 && flag < 2)
+		lambda = generateEigenValuesP1D(N-1);
+
+	// printf("Print the eigenmatrix\n");
+	// printMatrix(Q);
+	// printf("The eigenvalues\n");
+	// printVector(lambda);
+	time = WallTime();
+	if (flag == 1)
+	{
+		DiagonalizationPoisson1Dfst(b,lambda);
+	}
+
+	printf("elapsed: %f\n", WallTime()-time);
+
+	evalMeshInternal(e, grid, exact);
+	axpy(b,e,-1.0);
+
+	printf("max error: %e\n", maxNorm(b));
+	freeVector(grid);
+	freeVector(b);
+	freeVector(e);
+	if (lambda)
+		freeVector(lambda);
+	return 0;
 }

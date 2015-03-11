@@ -1,5 +1,6 @@
       SUBROUTINE FST (VECTOR, N, Z, NN)
       INTEGER   N, NN, INV
+C       N-problem size, NN = 4*N 
       LOGICAL   INVERSE
       REAL*8    VECTOR(1:N-1)
       COMPLEX*16 Z(0:NN-1)

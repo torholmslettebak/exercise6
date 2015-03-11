@@ -3,6 +3,7 @@
 
 Vector generateEigenValuesP1D(int m)
 {
+	printf("Inside the eigenValues method\n");
 	Vector result = createVector(m);
 	for(int i = 0; i < m; ++i)
 	{
