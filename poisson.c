@@ -36,6 +36,15 @@ void printMatrix(Real **matrix, int m)
 	}
 }
 
+printVector(Real *vec, int m)
+{
+	int i = 0;
+	for (i = 0; i < m; i++)
+	{
+		printf("	%lf	", vec[i]);
+	}
+	printf("\n");
+}
 int main(int argc, char **argv )
 {
   Real *diag, **b, **bt, *z;
@@ -67,6 +76,8 @@ int main(int argc, char **argv )
   for (i=0; i < m; i++) {
     diag[i] = 2.*(1.-cos((i+1)*pi/(Real)n));
   }
+  printf("The diagonal vector of eigenvalues \n");
+  printVector(diag, m);
 
   // Vector vec = createVector(m);
   // vec->data = diag;
