@@ -23,6 +23,18 @@ void transpose (Real **bt, Real **b, int m);
 void fst_(Real *v, int *n, Real *w, int *nn);
 void fstinv_(Real *v, int *n, Real *w, int *nn);
 
+void printMatrix(Real **matrix, int m)
+{
+	int i,j;
+	for(i = 0; i < m; i++)
+	{
+		for(j = 0; j < m; j++)
+		{
+			printf("	%lf	", matrix[i][j]);
+		}
+		printf("\n");
+	}
+}
 
 int main(int argc, char **argv )
 {
@@ -34,10 +46,11 @@ int main(int argc, char **argv )
   /* the total number of degrees-of-freedom in each spatial direction is (n-1) */
   /* this version requires n to be a power of 2 */
 
- if( argc < 2 ) {
+	if( argc < 2 )
+	{
     printf("need a problem size\n");
     return 1;
-  }
+	}
 
   n  = atoi(argv[1]);
   m  = n-1;
@@ -50,40 +63,68 @@ int main(int argc, char **argv )
 
   h    = 1./(Real)n;
   pi   = 4.*atan(1.);
-
+  // Generates the eigenvalues and stores it in diagonal
   for (i=0; i < m; i++) {
     diag[i] = 2.*(1.-cos((i+1)*pi/(Real)n));
   }
+
+  // Vector vec = createVector(m);
+  // vec->data = diag;
   for (j=0; j < m; j++) {
     for (i=0; i < m; i++) {
       b[j][i] = h*h;
     }
   }
+  // printing b matrix for testing
+  printf("The B matrix filled with h*h\n");
+  printMatrix(b, m);
+
   for (j=0; j < m; j++) {
     fst_(b[j], &n, z, &nn);
   }
+	printf("The B matrix after fst_\n");
+  for (i = 0; i < m; i++)
+  {
+  	for (j = 0; j < m; j++)
+  	{
+  		printf("	%lf	", b[i][j]);
+  	}
+  	printf("\n");
+  }
 
   transpose (bt,b,m);
+	printf("The bt matrix after transpose\n");
+	printMatrix(bt, m);
 
   for (i=0; i < m; i++) {
     fstinv_(bt[i], &n, z, &nn);
   }
+ 	printf("The bt matrix after fstinv_\n");
+  printMatrix(bt, m);
   
   for (j=0; j < m; j++) {
     for (i=0; i < m; i++) {
       bt[j][i] = bt[j][i]/(diag[i]+diag[j]);
     }
   }
+  printf("The bt matrix something\n");
+  printMatrix(bt, m);
   
   for (i=0; i < m; i++) {
     fst_(bt[i], &n, z, &nn);
   }
+  printf("The bt matrix after fst_\n");
+  printMatrix(bt, m);
 
   transpose (b,bt,m);
+  printf("The b matrix after another transpose \n");
+  printMatrix(b, m);
 
   for (j=0; j < m; j++) {
     fstinv_(b[j], &n, z, &nn);
   }
+	printf("The b matrix after fstinv_ \n");
+	printMatrix(b, m);
 
   umax = 0.0;
   for (j=0; j < m; j++) {
