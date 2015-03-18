@@ -5,11 +5,11 @@
 // #include "solvers.h"
 #include "poissoncommon.h"
 
-double alpha=0.1;
+double alpha=0.0;
 
 double exact(double x)
 {
-	return x*(pow(x,5.0)-1.0);
+	return 1;
 }
 
 double source(double x)
@@ -27,9 +27,23 @@ void DiagonalizationPoisson1Dfst(Vector u, const Vector lambda)
 	int NN=4*N;
 	copyVector(btilde, u);
 	fst(btilde->data, &N, buf->data, &NN);
+	printf("after fst btidle vector: \n");
+	printVector(btilde);
+	printf("\n");
 	for (i=0;i<btilde->len;++i)
 		btilde->data[i] /= (lambda->data[i]+alpha);
+
+	printf("after the for loop, btilde: \n");
+	printVector(btilde);
+	printf("\n");
 	fstinv(btilde->data, &N, buf->data, &NN);
+	
+	printf("The btidle after fstinv\n");
+	printVector(btilde);
+	printf("\n");
+	printf("The bud vector: \n");
+	printVector(buf);
+	printf("\n");
 	copyVector(u, btilde);
 	freeVector(btilde);
 	freeVector(buf);
@@ -39,7 +53,7 @@ int main(int argc, char** argv)
 {
 	// will try to do this with fst based approach
 	int N, flag;
-	double time, h, tol=1e-4;
+	double time, h, tol=1e-8;
 	Vector grid, b, e, lambda=NULL;
 	Matrix Q;
 	if (argc < 3) 
@@ -92,11 +106,10 @@ int main(int argc, char** argv)
 	printf("\n");
 	evalMeshInternal(e, grid, exact);
 	scaleVector(b, pow(h, 2));
-	axpy(b, e, alpha);
-	// printf("The b vector\n");
-	// printVector(b);
-	// printf("The e vector\n");
-	// printVector(e);
+	printf("The b vector\n"); //this gives f*h^2, and here f = 1
+	printVector(b);
+	printf("The e vector\n");
+	printVector(e);
 	if (flag >= 0 && flag < 2)
 		lambda = generateEigenValuesP1D(N-1);
 
@@ -105,16 +118,22 @@ int main(int argc, char** argv)
 	// printf("The eigenvalues\n");
 	// printVector(lambda);
 	time = WallTime();
+	printf("the lambda vector\n");
+	printVector(lambda);
+	printf("\n");
 	if (flag == 1)
 	{
 		DiagonalizationPoisson1Dfst(b,lambda);
 	}
+	printf("the b vector\n");
+	printVector(b);
+	printf("\n");
 
+	axpy(b, e, alpha);
 	printf("elapsed: %f\n", WallTime()-time);
 
 	evalMeshInternal(e, grid, exact);
 	axpy(b,e,-1.0);
-
 	printf("max error: %e\n", maxNorm(b));
 	freeVector(grid);
 	freeVector(b);
