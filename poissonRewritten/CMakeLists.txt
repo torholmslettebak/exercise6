@@ -52,4 +52,7 @@ add_library(poisson_common poissoncommon.c fst.f)
 
 
 add_executable(poissonRewrite poissonRewrite.c)
+add_executable(testTranspose testTransposeMPIOMP.c)
+
 target_link_libraries(poissonRewrite poisson_common ${COMMON_LIBRARIES})
+target_link_libraries(testTranspose poisson_common ${COMMON_LIBRARIES})

@@ -395,6 +395,7 @@ void evalMeshDispl(Vector u, Vector grid, function1D func)
 
 void evalMesh2Displ(Matrix b, Vector grid, function2D func, int* mpi_top_coords)
 {
+  printf("inside eval\n");
   int i, j;
   for (i=1;i<b->cols-1;++i) {
     int dispx=mpi_top_coords[0]==0?0:1;
@@ -517,6 +518,27 @@ void transposeMatrix(Matrix A, const Matrix B)
     for (j=0;j<B->cols;++j)
       A->data[i][j] = B->data[j][i];
 }
+
+#ifdef HAVE_MPI
+void transposeMatrixMPI(Matrix A, const Matrix B, int N, int *len, int *displ)
+{
+  int rank, i;
+  Vector recvbuf = createVector(N);
+  MPI_Alltoallv(B->data[rank], len, displ, MPI_DOUBLE, recvbuf->data, len, displ, MPI_DOUBLE, WorldComm);
+
+  if (rank!=0)
+  {
+    MPI_Send(recvbuf->data, N, MPI_DOUBLE, 0, tag, WorldComm);
+  }
+
+  if(rank==0)
+  {
+    A->data[rank] = recvbuf->data;
+    Vector vec;
+    for int()
+  }
+}
+#endif
 
 void saveMatrix(const Matrix A, char* file)
 {

@@ -125,6 +125,12 @@ void freeMatrix(Matrix A);
 //! \param B The matrix to transpose
 void transposeMatrix(Matrix A, const Matrix B);
 
+//! \Transpose a matrix \f$A = B^T\f$
+//! \This version supports MPI
+//! \param A The transposed matrix
+//! \param B The matrix to transpose
+void transposeMatrixMPI(Matrix A, const Matrix B)
+
 //! \brief Get the maximum number of available threads
 //! \return Number of available threads
 int getMaxThreads();
@@ -260,6 +266,10 @@ void collectVector(Vector u);
 //! \brief Print a vector to the terminal for inspection
 //! \param u The vector to print
 void printVector(const Vector u);
+
+//! \brief Print a matrix to the terminal for inspection
+//! \param u The vector to matrix
+void printMatrix(const Matrix u);
 
 //! \brief Clone a vector
 //! \param u Vector to clone
