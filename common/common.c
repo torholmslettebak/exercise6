@@ -522,7 +522,7 @@ void transposeMatrix(Matrix A, const Matrix B)
 #ifdef HAVE_MPI
 void transposeMatrixMPI(Matrix A, const Matrix B, int N, int *len, int *displ)
 {
-  int rank, i;
+  int rank, i, tag=1;
   Vector recvbuf = createVector(N);
   MPI_Alltoallv(B->data[rank], len, displ, MPI_DOUBLE, recvbuf->data, len, displ, MPI_DOUBLE, WorldComm);
 
@@ -535,7 +535,7 @@ void transposeMatrixMPI(Matrix A, const Matrix B, int N, int *len, int *displ)
   {
     A->data[rank] = recvbuf->data;
     Vector vec;
-    for int()
+    // for (i = 1; i < )
   }
 }
 #endif
@@ -672,4 +672,10 @@ Matrix cloneMatrix(const Matrix u)
   }
   
   return result; 
+
+}
+
+void appendVector(Vector dest, Vector from, int startpoint, int blocksize)
+{
+  memcpy(dest->data +startpoint, from->data, blocksize*blocksize*sizeof(double));
 } 

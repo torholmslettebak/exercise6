@@ -94,14 +94,7 @@ int main(int argc, char **argv )
     fst_(b[j], &n, z, &nn);
   }
 	printf("The B matrix after fst_\n");
-  for (i = 0; i < m; i++)
-  {
-  	for (j = 0; j < m; j++)
-  	{
-  		printf("	%lf	", b[i][j]);
-  	}
-  	printf("\n");
-  }
+  printMatrix(b, m);
 
   transpose (bt,b,m);
 	printf("The bt matrix after transpose\n");
@@ -115,7 +108,9 @@ int main(int argc, char **argv )
   
   for (j=0; j < m; j++) {
     for (i=0; i < m; i++) {
+      // printf("The expression: bt[j][i] = bt[j][i]/(diag[i]+diag[j]),\n bt[j][i] = %lf, diag[i] = %lf ,diag[j] = %lf \n", bt[j][i], diag[i], diag[j]);
       bt[j][i] = bt[j][i]/(diag[i]+diag[j]);
+      printf("bt[j][i] = %lf (j = %d, i = %d) \n", bt[j][i], j, i);
     }
   }
   printf("The bt matrix something\n");

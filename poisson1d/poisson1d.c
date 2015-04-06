@@ -5,17 +5,16 @@
 // #include "solvers.h"
 #include "poissoncommon.h"
 
-double alpha=0.0;
+double alpha=0.1;
 
 double exact(double x)
 {
-	return 1;
+  return x*(pow(x,5.0)-1.0);
 }
 
 double source(double x)
 {
-	return 1;
-	// return -30*pow(x,4.0);
+  return -30*pow(x,4.0);
 }
 
 void DiagonalizationPoisson1Dfst(Vector u, const Vector lambda)

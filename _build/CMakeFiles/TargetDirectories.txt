@@ -1,0 +1,3 @@
+/home/tor/Desktop/superdata/exercise6/_build/CMakeFiles/common.dir
+/home/tor/Desktop/superdata/exercise6/_build/CMakeFiles/poisson.dir
+/home/tor/Desktop/superdata/exercise6/_build/CMakeFiles/poisson-f.dir

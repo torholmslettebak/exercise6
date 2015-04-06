@@ -1,0 +1,2 @@
+/usr/bin/ar cr libpoisson_common.a  CMakeFiles/poisson_common.dir/poissoncommon.c.o CMakeFiles/poisson_common.dir/fst.f.o
+/usr/bin/ranlib libpoisson_common.a

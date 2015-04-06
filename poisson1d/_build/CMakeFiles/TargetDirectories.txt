@@ -1,0 +1,4 @@
+/home/tor/Desktop/superdata/exercise6/poisson1d/_build/common/CMakeFiles/common.dir
+/home/tor/Desktop/superdata/exercise6/poisson1d/_build/CMakeFiles/poisson1d.dir
+/home/tor/Desktop/superdata/exercise6/poisson1d/_build/CMakeFiles/poisson_common.dir
+/home/tor/Desktop/superdata/exercise6/poisson1d/_build/common/CMakeFiles/verbose-test.dir

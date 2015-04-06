@@ -129,7 +129,8 @@ void transposeMatrix(Matrix A, const Matrix B);
 //! \This version supports MPI
 //! \param A The transposed matrix
 //! \param B The matrix to transpose
-void transposeMatrixMPI(Matrix A, const Matrix B)
+void transposeMatrixMPI(Matrix A, const Matrix B, int N, int *len, int *displ);
+
 
 //! \brief Get the maximum number of available threads
 //! \return Number of available threads
@@ -280,5 +281,8 @@ Vector cloneVector(const Vector u);
 //! \param u Matrix to clone
 //! \returns New clone of matrix 
 Matrix cloneMatrix(const Matrix u);
+
+void appendVector(Vector dest, Vector from, int startpoint, int blocksize);
+
 
 #endif

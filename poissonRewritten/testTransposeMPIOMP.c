@@ -42,7 +42,7 @@ void transposeMPI(Matrix A_t, Matrix A, int rank, int size)
 	}
 }
 
-void fillMatrix(Matrix A)
+void fillMatrix(Matrix A, int rank)
 {
 	double counter = 1;
 	for(int i = 0; i < A->rows; i++)
@@ -50,6 +50,7 @@ void fillMatrix(Matrix A)
 		for(int j = 0; j < A->rows; j++)
 		{
 			A->data[i][j] = counter; 
+			// printf("I am rank %d, and my A[i][j]: %lf\n", rank, A->data[i][j]);
 			counter++;
 		}
 	}
@@ -73,6 +74,48 @@ void printArrayOfInts(int *array, int m)
 	}
 	printf("\n");
 }
+// void insertSubMatrix(Matrix subMat, Matrix toMatrix, int level, int startCol)
+// {
+// 	for (int i = 0; i < )
+// 	{
+
+// 	}
+// }
+// appendToBuffVec(Matrix submat, Vector vec, rank, blockSize, N)
+// {
+// 	Vector subAsVec = submat->as_vec;
+
+// }
+
+void assemblePartMatrix(Matrix A_t, Vector recvbuf, int rank, int blockSize, int size)
+{
+	int row = 0;
+	int block = 0;
+	int numberOfBlocks = size;
+	// for (int i = rank; i < rank+blockSize; i++) // loops over the columns where the vector is to be placed.
+	// {
+	// 	for (int j = 0;)
+	// }
+	
+	
+	for (int i = 0; i < numberOfBlocks; i ++)
+	{
+		int startIndex = i * blockSize*blockSize; 
+		for(int j = startIndex; j < startIndex + blockSize*blockSize; j++)
+		{
+			//  int j er nå index i recvbuf
+			// blocksize*blocksize antall elementer skal nå inn i A_t
+			// recvbuf->data[j];
+			A_t -> data[rank][i] = recvbuf->data[j];
+			A_t -> data[rank][i+1] = recvbuf->data[]
+		}
+	}
+	
+}
+
+
+
+
 
 int main(int argc, char **argv)
 {	
@@ -81,81 +124,123 @@ int main(int argc, char **argv)
 	double t1, t2;
 	int N = atoi(argv[1]);
 	MPI_Status status;
+	int mpi_top_coords[2];
+	int mpi_top_sizes[2];
 	tag = 1;
+	Matrix recvMat;
 	
 	// Vector recvbuf, recvcounts, rdispls;
 	int *recvcounts, *rdispls;
-	double *recvbuf;
-	recvbuf = calloc(N,sizeof(double));
+	// Vector recvbuf = createVector(N);
+	// recvbuf = calloc(N,sizeof(double));
 
 	init_app(argc, argv, &rank, &size);
 
 	int *len, *displ;
-	splitVector(N, size, &len, &displ);
 
-	if (size == 1)
+	A = createMatrix(N, N);
+	A_t = createMatrix(N,N);
+	fillMatrix(A, rank);
+	// printf("The displ vector: \n");
+	// printArrayOfInts(displ, size);
+	// Now to split matrix into blocks
+	// Assuming even number of processes
+	int blockSize = N/size;
+	// each processor is responsible for a column of blocks
+	// this gives balanced workload for the processors
+	// equal number of sends and receives, as well as number of transposes
+	// number if blocks for each process = number of processes
+	// if (rank == 0)
+	// {
+	Vector bufferVec = createVector(N*blockSize);
+	Vector recvbuf = createVector(N*blockSize);
+
+	// if (rank==0)
+	// {
+	// 	printf("bufferVec size: %d\n", bufferVec->);
+	// }
+	for (int i = 0; i < size; i++) // sizeequals number of blocks per proc
 	{
-	// printMatrix(A);
-		A = createMatrix(N,N);
-		A_t = createMatrix(N,N);
-		fillMatrix(A);
 
-		t1 = WallTime();
-		transposeMatrix(A_t, A);
-		t2 = WallTime();
-		printf("The common.c transpose performed in: %lf\n", t2-t1);
-
-		t1 = WallTime();
-		transposeOmp(A_t, A);
-		t2 = WallTime();
-		printf("The transposeOmp performs with %d threads, at %lf \n", getMaxThreads(), t2-t1);
-	// printMatrix(A_t);
+		Matrix submat = subMatrix(A, i*blockSize, blockSize, rank*blockSize, blockSize);
+		Matrix submat_t = createMatrix(blockSize, blockSize);
+			// printMatrix(submat);
+		transposeMatrix(submat_t, submat);
+		// if (rank == 2)
+		// {
+		// 	printMatrix(submat_t);
+		// }
+			// insertSubMatrix(submat_t, A_t, i, rank);
+			// buffermatrix->data[i]
+		// KK, store each processes block column in a vector, and use gather or alltoall to merge together
+		appendVector(bufferVec, submat_t->as_vec, i*blockSize*blockSize, blockSize);
 	}
-
-	else
+	if(rank==0)
 	{
-		Vector matrixAsVec;
-		A = createMatrix(N,N);
-		A_t = createMatrix(N,N);
-		fillMatrix(A);
-		matrixAsVec = A->as_vec;
-		// printArrayOfDouble(A->data[rank], N, rank);
-			// transposeMPI(A_t, A, rank, size, l,en, displ);
+		printVector(A->as_vec);
+		// printVector(bufferVec);
+	} 
 
-		// if (rank == 0)
-		// {
-		// 	printf("I am rank %d, and len = %d, displ = %d \n", rank, len[rank], displ[rank]);
-		// }
+	// if(rank==1)
+	// {
+	// 	printVector(bufferVec);
+	// } 
+	// if(rank==2)
+	// {
+	// 	printVector(bufferVec);
+	// } 
+	// if(rank==3)
+	// {
+	// 	printVector(bufferVec);
+	// } 
+	// Now each process has its own buffer vector. perform alltoall to send the parts that are to be swapped to each other
+	splitVector(N*blockSize, size, &len, &displ);
+	// printArrayOfInts(len, size);
+	// printArrayOfInts(displ, size);
+	MPI_Alltoallv(bufferVec->data, len, displ, MPI_DOUBLE, recvbuf->data,len, displ, MPI_DOUBLE, WorldComm);
 
-		// if (rank !=0)
-		// {
-		// 	printf("I am rank %d, and len = %d, displ = %d \n", rank, len[rank], displ[rank]);
-		// }
-		// printf("The send buffer: \n");
-		// printVector(matrixAsVec);
-		// printf("Before\n");
-		// printf("Rank before alltoallv: %d\n", rank);
-		MPI_Alltoallv((A->data[rank]), len, displ, MPI_DOUBLE, recvbuf, len, displ, MPI_DOUBLE, WorldComm);
-		// printf("After\n");
-		if (rank!=0)
-		{
-			MPI_Send(recvbuf, N, MPI_DOUBLE, 0, tag, WorldComm);
-		}
-		// MPI_Barrier(WorldComm);
-		if (rank==0)
-		{
-			A_t->data[rank] = recvbuf;
-			Vector rec;
-			for (int i = 1; i<size;i++)
-			{
-				rec = createVector(N);
-				MPI_Recv(rec->data, N, MPI_DOUBLE, i, tag, WorldComm, MPI_STATUS_IGNORE);
-				A_t->data[i]=rec->data;
-				printVector(rec);
-			}
-			printMatrix(A_t);
-		}
+	if(rank==0)
+	{
+		printVector(recvbuf);
+	} 
 
+	if(rank==1)
+	{
+		printVector(recvbuf);
+	} 
+	if(rank==2)
+	{
+		printVector(recvbuf);
+	} 
+	if(rank==3)
+	{
+		printVector(recvbuf);
+	} 
+
+	// Now every column is transposed, and ready to be sent to assembly
+	// MPI_Gather(bufferVec->data, bufferVec->len, MPI_DOUBLE, recvMat->data[rank], bufferVec->len, MPI_DOUBLE, 0, WorldComm);
+	// printf("recvbuf->data: \n");
+	// printVector(recvbuf);
+
+	// Make each process assemble its own A_t with its own part of recvbuff
+	// Then send this with MPI_Gather(v) too rank 0 
+	//  if this works transpose is done and return A_t
+	assemblePartMatrix(A_t, recvbuf, rank, blockSize);
+	MPI_Gather(recvbuf->data, N*blockSize, MPI_DOUBLE, A_t->as_vec->data, N*blockSize, MPI_DOUBLE, 0, WorldComm);	
+	if(rank==0)
+	{
+		printMatrix(A_t);
 	}
+	// recvMat = createMatrix(size, N*blockSize);
+	// printMatrix(recvMat);
+	// MPI_Barrier(WorldComm);
+	// if (rank == 0)
+	// {
+	// 	printVector(recvMat->as_vec);
+	// 	// printArrayOfDouble(recvMat->data[1], blockSize*N, rank);
+	// 	printf("THe number of rows %d, the number of cols %d\n", recvMat->rows, recvMat->cols);
+	// }
 
+	// }
 }
+

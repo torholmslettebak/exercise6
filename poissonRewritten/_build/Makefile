@@ -125,6 +125,19 @@ poisson_common/fast:
 .PHONY : poisson_common/fast
 
 #=============================================================================
+# Target rules for targets named testTranspose
+
+# Build rule for target.
+testTranspose: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 testTranspose
+.PHONY : testTranspose
+
+# fast build rule for target.
+testTranspose/fast:
+	$(MAKE) -f CMakeFiles/testTranspose.dir/build.make CMakeFiles/testTranspose.dir/build
+.PHONY : testTranspose/fast
+
+#=============================================================================
 # Target rules for targets named common
 
 # Build rule for target.
@@ -206,6 +219,30 @@ poissoncommon.c.s:
 	$(MAKE) -f CMakeFiles/poisson_common.dir/build.make CMakeFiles/poisson_common.dir/poissoncommon.c.s
 .PHONY : poissoncommon.c.s
 
+testTransposeMPIOMP.o: testTransposeMPIOMP.c.o
+.PHONY : testTransposeMPIOMP.o
+
+# target to build an object file
+testTransposeMPIOMP.c.o:
+	$(MAKE) -f CMakeFiles/testTranspose.dir/build.make CMakeFiles/testTranspose.dir/testTransposeMPIOMP.c.o
+.PHONY : testTransposeMPIOMP.c.o
+
+testTransposeMPIOMP.i: testTransposeMPIOMP.c.i
+.PHONY : testTransposeMPIOMP.i
+
+# target to preprocess a source file
+testTransposeMPIOMP.c.i:
+	$(MAKE) -f CMakeFiles/testTranspose.dir/build.make CMakeFiles/testTranspose.dir/testTransposeMPIOMP.c.i
+.PHONY : testTransposeMPIOMP.c.i
+
+testTransposeMPIOMP.s: testTransposeMPIOMP.c.s
+.PHONY : testTransposeMPIOMP.s
+
+# target to generate assembly for a file
+testTransposeMPIOMP.c.s:
+	$(MAKE) -f CMakeFiles/testTranspose.dir/build.make CMakeFiles/testTranspose.dir/testTransposeMPIOMP.c.s
+.PHONY : testTransposeMPIOMP.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -216,6 +253,7 @@ help:
 	@echo "... poissonRewrite"
 	@echo "... poisson_common"
 	@echo "... rebuild_cache"
+	@echo "... testTranspose"
 	@echo "... common"
 	@echo "... verbose-test"
 	@echo "... fst.o"
@@ -225,6 +263,9 @@ help:
 	@echo "... poissoncommon.o"
 	@echo "... poissoncommon.i"
 	@echo "... poissoncommon.s"
+	@echo "... testTransposeMPIOMP.o"
+	@echo "... testTransposeMPIOMP.i"
+	@echo "... testTransposeMPIOMP.s"
 .PHONY : help
 
 
