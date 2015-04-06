@@ -1,1 +1,0 @@
-/usr/bin/gfortran      CMakeFiles/poisson-f.dir/poisson.f.o  -o poisson-f -rdynamic libcommon.a /usr/lib/x86_64-linux-gnu/libmpichf90.so /usr/lib/x86_64-linux-gnu/libmpich.so /usr/lib/x86_64-linux-gnu/libopa.so /usr/lib/x86_64-linux-gnu/libmpl.so /usr/lib/x86_64-linux-gnu/librt.so /usr/lib/libcr.so -lpthread 

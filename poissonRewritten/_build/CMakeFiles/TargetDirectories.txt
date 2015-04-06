@@ -1,5 +1,0 @@
-/home/tor/Desktop/superdata/exercise6/poissonRewritten/_build/common/CMakeFiles/common.dir
-/home/tor/Desktop/superdata/exercise6/poissonRewritten/_build/CMakeFiles/poissonRewrite.dir
-/home/tor/Desktop/superdata/exercise6/poissonRewritten/_build/CMakeFiles/poisson_common.dir
-/home/tor/Desktop/superdata/exercise6/poissonRewritten/_build/CMakeFiles/testTranspose.dir
-/home/tor/Desktop/superdata/exercise6/poissonRewritten/_build/common/CMakeFiles/verbose-test.dir
