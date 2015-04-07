@@ -17,6 +17,9 @@ extern MPI_Comm SelfComm;
 #define max(x,y) ((x)>(y)?(x):(y))
 #define min(x,y) ((x)<(y)?(x):(y))
 
+// typedef Real (a double) for fortran purposes 
+typedef double Real;
+
 //! \brief A structure describing a vector
 typedef struct {
   double* data;   //!< The vector data
@@ -129,7 +132,7 @@ void transposeMatrix(Matrix A, const Matrix B);
 //! \This version supports MPI
 //! \param A The transposed matrix
 //! \param B The matrix to transpose
-void transposeMatrixMPI(Matrix A, const Matrix B, int N, int *len, int *displ);
+void transposeMatrixMPI(Real **A, int rank, int size, int N);
 
 
 //! \brief Get the maximum number of available threads
@@ -284,5 +287,15 @@ Matrix cloneMatrix(const Matrix u);
 
 void appendVector(Vector dest, Vector from, int startpoint, int blocksize);
 
+Real *createRealArray (int n);
 
+Real **createReal2DArray (int m, int n);
+
+void myEvalMeshInternal(Real **matrix, Real *grid, function2D func, int N, int rows, int rank, int *displ);
+
+void myScaleVector(Real *vector, double alpha, int vecLen);
+
+// n = number of rows
+// vecLen = number of columns
+void myScaleMatrix(Real **matrix, int n, double alpha, int vecLen);
 #endif

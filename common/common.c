@@ -11,6 +11,8 @@ MPI_Comm WorldComm;
 MPI_Comm SelfComm;
 #endif
 
+typedef double Real;
+
 void init_app(int argc, char** argv, int* rank, int* size)
 {
 #ifdef HAVE_MPI
@@ -395,7 +397,6 @@ void evalMeshDispl(Vector u, Vector grid, function1D func)
 
 void evalMesh2Displ(Matrix b, Vector grid, function2D func, int* mpi_top_coords)
 {
-  printf("inside eval\n");
   int i, j;
   for (i=1;i<b->cols-1;++i) {
     int dispx=mpi_top_coords[0]==0?0:1;
@@ -407,6 +408,7 @@ void evalMesh2Displ(Matrix b, Vector grid, function2D func, int* mpi_top_coords)
     }
   }
 }
+
 
 void evalMeshInternal(Vector u, Vector grid, function1D func)
 {
@@ -423,9 +425,43 @@ void evalMeshInternal2(Matrix u, Vector grid, function2D func, int boundary)
       u->data[j-!boundary][i-!boundary] = func(grid->data[i], grid->data[j]);
 }
 
+void myEvalMeshInternal(Real **matrix, Real *grid, function2D func, int N, int rows, int rank, int *displ)
+{
+    int i, j;
+    // printf("Here, following should be only N-1*N-1 = %d elementer\n", (N-1)*(N-1));
+    for (i = 1; i < rows+1; i++)
+    {
+        for (j = 1; j < N;j++)
+        {
+            // printf("I am rank %d, i = %d and j = %d,and my x val = %lf\n", rank, i, j, grid[i+displ[rank]]);
+            // printf("I am rank %d, and my y val = %lf\n", rank, grid[j]);
+            matrix[i-1][j-1] = func(grid[i+displ[rank]], grid[j]);
+            // printf("Matrix[i-1][j-1] = %lf\n", matrix[i-1][j-1]);
+        }
+    }    
+}
+
 void scaleVector(Vector u, double alpha)
 {
   dscal(&u->len, &alpha, u->data, &u->stride);
+}
+
+void myScaleVector(Real *u, Real alpha, int vecLen)
+{
+    int stride = 1;
+    // printf("Started myScaleVector\n");
+    dscal(&vecLen, &alpha, u, &stride);
+}
+
+void myScaleMatrix(Real **matrix, int n, Real alpha, int vecLen)
+{
+    int i;
+    // printf("scaleMatrix n = %d\n", n);
+    // printf("Started myScaleMatrix\n");
+    for (i = 0; i < n; i++)
+    {
+        myScaleVector(matrix[i], alpha, vecLen);
+    }
 }
 
 void axpy(Vector y, const Vector x, double alpha)
@@ -520,34 +556,42 @@ void transposeMatrix(Matrix A, const Matrix B)
 }
 
 #ifdef HAVE_MPI
-void transposeMatrixMPI(Matrix A, const Matrix B, int N, int *len, int *displ)
-{
-  int rank, i, tag=1;
-  Vector recvbuf = createVector(N);
-  MPI_Alltoallv(B->data[rank], len, displ, MPI_DOUBLE, recvbuf->data, len, displ, MPI_DOUBLE, WorldComm);
+void transposeMatrixMPI(Real **A, int rank, int size, int N)
+{ 
+    int row, col, k, i, j; 
+    Real temp; 
 
-  if (rank!=0)
-  {
-    MPI_Send(recvbuf->data, N, MPI_DOUBLE, 0, tag, WorldComm);
-  }
+    MPI_Datatype mpi_vector, mpi_vector_t; 
+    int numrows = N / size; 
+    MPI_Type_vector(N, numrows, N, MPI_DOUBLE, &mpi_vector); 
+    MPI_Type_create_resized(mpi_vector, 0, numrows*sizeof(Real), &mpi_vector_t); 
+    MPI_Type_free(&mpi_vector); 
+    MPI_Type_commit(&mpi_vector_t);
 
-  if(rank==0)
-  {
-    A->data[rank] = recvbuf->data;
-    Vector vec;
-    // for (i = 1; i < )
-  }
+    row = rank*numrows; 
+    // local transpose of the rank's block of rows 
+    for(k = 0; k < size; k++) { 
+        col = k*numrows; 
+        for(i = 0; i < numrows; i++) { 
+            for(j =i+1; j < numrows; j++) { 
+                temp = A[row+i][col + j]; 
+                A[row + i][col + j] = A[row + j][col + i]; 
+                A[row + j][col + i] = temp; 
+            } 
+        } 
+    }
+    MPI_Alltoall(A[rank*numrows], 1, mpi_vector_t, A[rank*numrows], 1, mpi_vector_t, MPI_COMM_WORLD); 
 }
 #endif
 
 void saveMatrix(const Matrix A, char* file)
 {
-  FILE* f = fopen(file,"wb");
-  int i,j;
-  for (i=0;i<A->rows;++i) {
-    for (j=0;j<A->cols;++j)
-      fprintf(f,"%1.16lf ",A->data[j][i]);
-    fprintf(f,"\n");
+    FILE* f = fopen(file,"wb");
+    int i,j;
+    for (i=0;i<A->rows;++i) {
+        for (j=0;j<A->cols;++j)
+          fprintf(f,"%1.16lf ",A->data[j][i]);
+      fprintf(f,"\n");
   }
 }
 
@@ -557,13 +601,11 @@ void collectVector(Vector u)
   int source, dest;
   // west 
   MPI_Cart_shift(*u->comm, 0,   -1, &source, &dest);
-  MPI_Sendrecv(u->data+1,        1, MPI_DOUBLE, dest,   0,
-               u->data+u->len-1, 1, MPI_DOUBLE, source, 0, *u->comm, MPI_STATUS_IGNORE);
+  MPI_Sendrecv(u->data+1, 1, MPI_DOUBLE, dest, 0, u->data+u->len-1, 1, MPI_DOUBLE, source, 0, *u->comm, MPI_STATUS_IGNORE);
 
   // east
-  MPI_Cart_shift(*u->comm,  0,   1, &source, &dest);
-  MPI_Sendrecv(u->data+u->len-2, 1, MPI_DOUBLE, dest,   1,
-               u->data,          1, MPI_DOUBLE, source, 1, *u->comm, MPI_STATUS_IGNORE);
+  MPI_Cart_shift(*u->comm, 0, 1, &source, &dest);
+  MPI_Sendrecv(u->data+u->len-2, 1, MPI_DOUBLE, dest,   1,u->data, 1, MPI_DOUBLE, source, 1, *u->comm, MPI_STATUS_IGNORE);
 #endif
 }
 
@@ -679,3 +721,29 @@ void appendVector(Vector dest, Vector from, int startpoint, int blocksize)
 {
   memcpy(dest->data +startpoint, from->data, blocksize*blocksize*sizeof(double));
 } 
+
+Real **createReal2DArray (int n1, int n2)
+{
+  int i, n;
+  Real **a;
+  a    = (Real **)calloc(n1,   sizeof(Real *));
+  a[0] = (Real  *)calloc(n1*n2, sizeof(Real));
+  for (i=1; i < n1; i++) {
+    a[i] = a[i-1] + n2;
+  }
+  n = n1*n2;
+  memset(a[0],0,n*sizeof(Real));
+  return (a);
+}
+
+Real *createRealArray (int n)
+{
+  Real *a;
+  int i;
+  a = (Real *)calloc(n, sizeof(Real));
+  for (i=0; i < n; i++) {
+    a[i] = 0.0;
+  }
+  return (a);
+}
+
