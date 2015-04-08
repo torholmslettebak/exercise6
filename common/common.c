@@ -425,6 +425,19 @@ void evalMeshInternal2(Matrix u, Vector grid, function2D func, int boundary)
       u->data[j-!boundary][i-!boundary] = func(grid->data[i], grid->data[j]);
 }
 
+void evalMeshInternal2Arrays(Real **u, Real *grid, function2D func, int N)
+{
+    int i, j;
+    for (i = 1; i < N; ++i)
+    {
+        for (j = 1; j < N; ++j)
+        {
+            u[i-1][j-1] = func(grid[i], grid[j]);
+        }
+    }
+}
+
+// To eval the mesh on ranks local array
 void myEvalMeshInternal(Real **matrix, Real *grid, function2D func, int N, int rows, int rank, int *displ)
 {
     int i, j;
@@ -467,6 +480,11 @@ void myScaleMatrix(Real **matrix, int n, Real alpha, int vecLen)
 void axpy(Vector y, const Vector x, double alpha)
 {
   daxpy(&x->len, &alpha, x->data, &x->stride, y->data, &y->stride);
+}
+
+void myaxpy(Real *vecY, Real *vecX, double alpha, int len, int stride)
+{
+    daxpy(&len, &alpha, vecX, &stride, vecY, &stride);
 }
 
 
@@ -522,6 +540,20 @@ double maxNorm(const Vector x)
 
   return result;
 }
+
+Real myMaxNorm(Real *vector, int len, int stride, int size, MPI_Comm comm)
+{
+    double result = fabs(vector[idamax(&len, vector, &stride)-1]);
+    // printf("result inside maxNorm %lf\n", result);
+#ifdef HAVE_MPI
+    if (size >1)
+    {
+        double r2=result;
+        MPI_Allreduce(&r2, &result, 1, MPI_DOUBLE, MPI_MAX, comm);
+    }
+    return result;
+}
+#endif
 
 void copyVector(Vector y, const Vector x)
 {

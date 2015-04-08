@@ -28,40 +28,20 @@ Real exact(Real x, Real y)
 	return (sin(x*M_PI)*sin(2*y*M_PI));
 }
 
-// void printVector2(Real *vec, int m)
-// {
-// 	int i = 0;
-// 	for (i = 0; i < m; i++)
-// 	{
-// 		printf("	%lf	", vec[i]);
-// 	}
-// 	printf("\n");
-// }
-// void printVector3(int *vec, int m)
-// {
-// 	int i = 0;
-// 	for (i = 0; i < m; i++)
-// 	{
-// 		printf("	%d	", vec[i]);
-// 	}
-// 	printf("\n");
-// }
 
-// void printMatrix2(Real **matrix, int m, int n)
-// {
-//   int i,j;
-// 	for(i = 0; i < m; i++)
-// 	{
-// 		for(j = 0; j < n; j++)
-// 		{
-// 			printf("	%lf	", matrix[i][j]);
-// 		}
-// 		printf("\n");
-// 	}
-// }
-
-void assembleMatrix()
+Real **assembleMatrix(Real *b_as_vec, Real *finalMatrix_as_vec, int *len, int *displ, int tag, int m, int size)
 {
+	// b_as_vec is roots own partMatrix
+	if(len[0]>0)
+	{
+		appendArray(finalMatrix_as_vec, b_as_vec, 0, len[0]*m);
+	}
+	for (int i = 1; i < size; i++)
+	{
+		int recvCount = len[i]*m;
+		int firstIndex = displ[i]*m;
+		MPI_Recv(&finalMatrix_as_vec[firstIndex], recvCount, MPI_DOUBLE, i, tag, WorldComm, MPI_STATUS_IGNORE);
+	}
 
 }
 
@@ -77,6 +57,18 @@ void matrixToVec(Real *toVec, Real **matrix, int rows, int cols, int rank, int *
 	}
 }
 
+	double generateError(Real *localVec, Real *exactVec, int m, int rank, int *len, int *displ)
+	{
+		// now to find local max local error
+		Real localError, globalError;
+		double alpha = -1.0;
+		int stride = 1;
+		myaxpy(localVec, exactVec, alpha, m*len[rank], stride);
+		localError = myMaxNorm(localVec, m*len[rank], 1, 1, SelfComm);
+		// Now to find global error through MPI_Reduce
+		MPI_Reduce(&localError, &globalError, 1, MPI_DOUBLE, MPI_MAX, 0, WorldComm);
+		return globalError;
+	}	
 
 Real* myEquidistantMesh(Real x0, Real x1, int N)
 {
@@ -92,57 +84,49 @@ Real* myEquidistantMesh(Real x0, Real x1, int N)
 }
 
 void DiagonalizationPoisson2Dfst(int n, int rank, int size)
-{
-	double t1 = WallTime();
+{		
+	double time1 = WallTime();
 	int m, nn;
-	Real **b, **b_t, **z, *diag, h, umax;
+	Real **b, **e, **z, *diag, h;
 	int *len, *displ;
 	
 	m = n-1;
 	nn = 4*n;
+	if(rank == 0)
+		printf("time  = %lf\n", WallTime()-time1);
 	splitVector(m, size, &len, &displ);
-	printVector3(len, size);
-	printVector3(displ, size);
 
 	diag = createRealArray (m);
 	b    = createReal2DArray (len[rank], m);
 	z    = createReal2DArray (omp_get_max_threads(), nn);
-
 	h    = 1./(Real)n;
-	// printf("stepsize h = %lf\n", h);
-
+	e 	 = createReal2DArray (len[rank], m);
 	Real* grid = myEquidistantMesh(0.0, 1.0, n);
 	myEvalMeshInternal(b, grid, source, n, len[rank], rank, displ);
-	// printf("finished with my myEvalMeshInternal\n");
 	myScaleMatrix(b, len[rank], h*h, m);
-	// printf("Finished with myScaleMatrix \n");
-	// printVector2(b[0], m);
-	// printf("after printmatrix\n");
-	  // Generates the eigenvalues and stores it in diagonal
+
+	// create solution matrix for each processor
+	myEvalMeshInternal(e, grid, exact, n, len[rank], rank, displ);
+
+	// Generates the eigenvalues and stores it in diagonal
 	for (int i=0; i < m; i++) 
 	{
 		diag[i] = 2.*(1.-cos((i+1)*M_PI/(Real)n));
 	}
 
-	// printf("After eigenvalues\n");
 #pragma omp parallel for schedule(static)
 	for (int j=0; j < len[rank]; j++) 
 	{
 		fst_(b[j], &n, z[omp_get_thread_num()], &nn);
 	}
-	// printf("After fst\n");
-	// printf("Before first transpose\n");
 
-	// printMatrix2(b, len[rank], m);
 	myTranspose(b, rank, size, m, len, displ);
-	// printMatrix2(b, len[rank], m);
-	// printf("After first transpose\n");
+
 #pragma omp parallel for schedule(static)
 	for (int i=0; i < len[rank]; i++) 
 	{
 		fstinv_(b[i], &n, z[omp_get_thread_num()], &nn);
 	}
-	// printf("after fstinv, i am rank: %d\n", rank);
 
 #pragma omp parallel for schedule(static)
 	for (int j=0; j < len[rank]; j++) 
@@ -152,37 +136,66 @@ void DiagonalizationPoisson2Dfst(int n, int rank, int size)
 			b[j][i] = b[j][i]/(diag[i]+diag[j+displ[rank]]);
 		}
 	}
-	// printf("after insertion of eigenvalues\n");
+
 #pragma omp parallel for schedule(static)	  
 	for (int i=0; i < len[rank]; i++) 
 	{
 		fst_(b[i], &n, z[omp_get_thread_num()], &nn);
 	}
-	// printf("after fst number 2\n");
+
 	myTranspose(b, rank, size, m, len, displ);
 
-	// printf("after another transpose, and before fstinv number 2\n");
 #pragma omp parallel for schedule(static)
 	for (int j=0; j < len[rank]; j++) 
 	{
 		fstinv_(b[j], &n, z[omp_get_thread_num()], &nn);
 	}
-	// printf("after fstinv number 2\n");
-	// printMatrix2(b, len[rank], m);
+
+
 	Real *b_as_vec = createRealArray(m*len[rank]);
+	Real *e_as_vec = createRealArray(m*len[rank]);
 	matrixToVec(b_as_vec, b, len[rank], m, rank, displ);
-	printVector2(b_as_vec, m*len[rank]);
+	matrixToVec(e_as_vec, e, len[rank], m, rank, displ);
+
 	// every rank now has its own vector representation its matrix
 	// Now to gather it all at root
-	Real *recvbuf = createRealArray(m*m);
-	int *recvcounts, *recvdispl;
-	splitVector(m*m, size, &recvcounts, &recvdispl);
-	// printVector3(recvcounts, size);
-	// MPI_Gatherv(b_as_vec, m*len[rank], MPI_DOUBLE, recvbuf, recvcounts, recvdispl, MPI_DOUBLE, 0, WorldComm);
-	if (rank = 0)
+	int tag = 1;
+	// One variant is to send each solution vector to gathering at root
+	// but since this already is a part solution, it should be possible to calculate max error locally
+	// and then calculate max error in total over MPI_Allreduce with MPI_MAX
+	// if(rank!=0)
+	// {
+	// 	MPI_Send(b_as_vec, m*len[rank], MPI_DOUBLE, 0, tag, WorldComm);		
+	// }
+
+	// Lets try the other variant to see if there can be a speedup  this way
+	// Each process needs it's own part of solution matrix
+	
+	double error = generateError(b_as_vec, e_as_vec, m, rank, len, displ);
+
+
+	if (rank == 0)
 	{
-		// printf("I am rank %d\n", rank);
-		// printVector2(recvbuf, m*m);
+		// double time2 = WallTime();
+		// Real *finalMatrix_as_vec = createRealArray(m*m);
+		// assembleMatrix(b_as_vec, finalMatrix_as_vec,len, displ, tag, m, size);
+		// // Generate exact solution matrix
+		// Real **exactSol = createReal2DArray(m, m);
+		// evalMeshInternal2Arrays(exactSol, grid, exact, n);
+		// Real *exactSol_as_vec = createRealArray(m*m);
+		// matrixToVec(exactSol_as_vec, exactSol, m, m, rank, displ);
+		// // Compute error
+		// double alpha = -1.0;
+		// int stride = 1;
+		// int vecLen = m*m;
+		// myaxpy(finalMatrix_as_vec, exactSol_as_vec, alpha, vecLen, stride);
+		// double error = myMaxNorm(finalMatrix_as_vec, m*m, 1, 1, SelfComm);
+
+		// printf("Time = %lf\n", time2-time1);
+		// printf("Error = %e\n", error);
+		printf("runtime = %lf\n", WallTime()-time1);
+		printf("Error = %e\n", error);
+		
 	}
 	// if (rank == 0)
 	// {
@@ -202,19 +215,11 @@ void DiagonalizationPoisson2Dfst(int n, int rank, int size)
 
 int main(int argc, char *argv[]) 
 {
-	int rank, size;
-
-	Real *diag, **b, **bt, *z;
-	Real pi, h, umax;
-	int i, j, n, m, nn;
+	int rank, size, n;
+	double time1;
 	// start MPI
 	MPI_Status status;
 	init_app(argc, argv, &rank, &size);
-
-	  /* the total number of grid points in each spatial direction is (n+1) */
-	  /* the total number of degrees-of-freedom in each spatial direction is (n-1) */
-	  /* this version requires n to be a power of 2 */
-
 	if( argc < 2 )
 	{
 		printf("need a problem size\n");
@@ -224,7 +229,10 @@ int main(int argc, char *argv[])
 	else
 	{
 		n  = atoi(argv[1]);
+		Real *finalMatrix_as_vec = createRealArray((n-1)*(n-1));
+		
 		DiagonalizationPoisson2Dfst(n, rank, size);
+				
 		close_app();
 	}
 } 

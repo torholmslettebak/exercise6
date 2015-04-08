@@ -313,5 +313,12 @@ void printVector2(Real *vec, int m);
 
 void appendArray(Real *dest, Real *from, int startpoint, int length);
 
+Real myMaxNorm(Real *vector, int len, int stride, int size, MPI_Comm comm);
+
+void evalMeshInternal2Arrays(Real **u, Real *grid, function2D func, int N);
+
+void myaxpy(Real *vecY, Real *vecX, double alpha, int len, int stride);
+
+
 
 #endif
