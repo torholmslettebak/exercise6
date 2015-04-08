@@ -28,26 +28,52 @@ Real exact(Real x, Real y)
 	return (sin(x*M_PI)*sin(2*y*M_PI));
 }
 
-void printVector2(Real *vec, int m)
+// void printVector2(Real *vec, int m)
+// {
+// 	int i = 0;
+// 	for (i = 0; i < m; i++)
+// 	{
+// 		printf("	%lf	", vec[i]);
+// 	}
+// 	printf("\n");
+// }
+// void printVector3(int *vec, int m)
+// {
+// 	int i = 0;
+// 	for (i = 0; i < m; i++)
+// 	{
+// 		printf("	%d	", vec[i]);
+// 	}
+// 	printf("\n");
+// }
+
+// void printMatrix2(Real **matrix, int m, int n)
+// {
+//   int i,j;
+// 	for(i = 0; i < m; i++)
+// 	{
+// 		for(j = 0; j < n; j++)
+// 		{
+// 			printf("	%lf	", matrix[i][j]);
+// 		}
+// 		printf("\n");
+// 	}
+// }
+
+void assembleMatrix()
 {
-	int i = 0;
-	for (i = 0; i < m; i++)
-	{
-		printf("	%lf	", vec[i]);
-	}
-	printf("\n");
+
 }
 
-void printMatrix2(Real **matrix, int m, int n)
+void matrixToVec(Real *toVec, Real **matrix, int rows, int cols, int rank, int *displ)
 {
-  int i,j;
-	for(i = 0; i < m; i++)
+	int startpoint = 0;
+	for (int i = 0; i < rows; i++)
 	{
-		for(j = 0; j < n; j++)
-		{
-			printf("	%lf	", matrix[i][j]);
-		}
-		printf("\n");
+		appendArray(toVec, matrix[i], startpoint, cols);
+		startpoint = startpoint+cols;
+		// printf("inside matrixToVec\n");
+		// printVector2(toVec, rows*cols);
 	}
 }
 
@@ -75,7 +101,9 @@ void DiagonalizationPoisson2Dfst(int n, int rank, int size)
 	m = n-1;
 	nn = 4*n;
 	splitVector(m, size, &len, &displ);
-	// printf("len[rank] = %d\n", len[rank]);
+	printVector3(len, size);
+	printVector3(displ, size);
+
 	diag = createRealArray (m);
 	b    = createReal2DArray (len[rank], m);
 	z    = createReal2DArray (omp_get_max_threads(), nn);
@@ -90,7 +118,6 @@ void DiagonalizationPoisson2Dfst(int n, int rank, int size)
 	// printf("Finished with myScaleMatrix \n");
 	// printVector2(b[0], m);
 	// printf("after printmatrix\n");
-
 	  // Generates the eigenvalues and stores it in diagonal
 	for (int i=0; i < m; i++) 
 	{
@@ -104,14 +131,12 @@ void DiagonalizationPoisson2Dfst(int n, int rank, int size)
 		fst_(b[j], &n, z[omp_get_thread_num()], &nn);
 	}
 	// printf("After fst\n");
-	if(rank == 3)
-	{
-		printf("before transpose vector b\n");
-		printVector2(b[0], m);
-		transposeMatrixMPI(b, rank, size, m);
-		printf("Check of first transpose\n");
-		printVector2(b[0], m);
-	}
+	// printf("Before first transpose\n");
+
+	// printMatrix2(b, len[rank], m);
+	myTranspose(b, rank, size, m, len, displ);
+	// printMatrix2(b, len[rank], m);
+	// printf("After first transpose\n");
 #pragma omp parallel for schedule(static)
 	for (int i=0; i < len[rank]; i++) 
 	{
@@ -124,7 +149,7 @@ void DiagonalizationPoisson2Dfst(int n, int rank, int size)
 	{
 		for (int i=0; i < m; i++) 
 		{
-			b[j][i] = b[j][i]/(diag[i]+diag[j]);
+			b[j][i] = b[j][i]/(diag[i]+diag[j+displ[rank]]);
 		}
 	}
 	// printf("after insertion of eigenvalues\n");
@@ -134,7 +159,7 @@ void DiagonalizationPoisson2Dfst(int n, int rank, int size)
 		fst_(b[i], &n, z[omp_get_thread_num()], &nn);
 	}
 	// printf("after fst number 2\n");
-	transposeMatrixMPI(b, rank, size, m);
+	myTranspose(b, rank, size, m, len, displ);
 
 	// printf("after another transpose, and before fstinv number 2\n");
 #pragma omp parallel for schedule(static)
@@ -143,20 +168,37 @@ void DiagonalizationPoisson2Dfst(int n, int rank, int size)
 		fstinv_(b[j], &n, z[omp_get_thread_num()], &nn);
 	}
 	// printf("after fstinv number 2\n");
-	if (rank == 0)
+	// printMatrix2(b, len[rank], m);
+	Real *b_as_vec = createRealArray(m*len[rank]);
+	matrixToVec(b_as_vec, b, len[rank], m, rank, displ);
+	printVector2(b_as_vec, m*len[rank]);
+	// every rank now has its own vector representation its matrix
+	// Now to gather it all at root
+	Real *recvbuf = createRealArray(m*m);
+	int *recvcounts, *recvdispl;
+	splitVector(m*m, size, &recvcounts, &recvdispl);
+	// printVector3(recvcounts, size);
+	// MPI_Gatherv(b_as_vec, m*len[rank], MPI_DOUBLE, recvbuf, recvcounts, recvdispl, MPI_DOUBLE, 0, WorldComm);
+	if (rank = 0)
 	{
-		umax = 0.0;
-		for (int j=0; j < m; j++) 
-		{
-			for (int i=0; i < m; i++) 
-			{
-				if (b[j][i] > umax) umax = b[j][i];
-			}
-		}
-		printf (" umax = %e \n",umax);
+		// printf("I am rank %d\n", rank);
+		// printVector2(recvbuf, m*m);
+	}
+	// if (rank == 0)
+	// {
+	// 	umax = 0.0;
+	// 	for (int j=0; j < m; j++) 
+	// 	{
+	// 		for (int i=0; i < m; i++) 
+	// 		{
+	// 			if (b[j][i] > umax) umax = b[j][i];
+	// 		}
+	// 	}
+	// 	printf (" umax = %e \n",umax);
 
-	}	
+	// }	
 }
+
 
 int main(int argc, char *argv[]) 
 {

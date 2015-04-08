@@ -298,4 +298,20 @@ void myScaleVector(Real *vector, double alpha, int vecLen);
 // n = number of rows
 // vecLen = number of columns
 void myScaleMatrix(Real **matrix, int n, double alpha, int vecLen);
+
+void myTranspose(Real **A, int rank, int size, int N, int *len, int *displ);
+
+void vecAsMatrix(Real **A, int rank, int size, int N, int *displ, int *len, Real *sendBuf);
+
+void matrixAsVec(Real **A, int rank, int size, int N, int *displ, int *len, Real *sendBuf);
+
+void printMatrix2(Real **matrix, int m, int n);
+
+void printVector3(int *vec, int m);
+
+void printVector2(Real *vec, int m);
+
+void appendArray(Real *dest, Real *from, int startpoint, int length);
+
+
 #endif

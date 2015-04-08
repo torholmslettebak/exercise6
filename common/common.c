@@ -556,6 +556,10 @@ void transposeMatrix(Matrix A, const Matrix B)
 }
 
 #ifdef HAVE_MPI
+
+// General matrix transpose with MPI, 
+// this one however does not work on anything except for square matrices and if MatrixSize is divisable by number of processes
+// This does not make it useful for poisson solution
 void transposeMatrixMPI(Real **A, int rank, int size, int N)
 { 
     int row, col, k, i, j; 
@@ -581,6 +585,67 @@ void transposeMatrixMPI(Real **A, int rank, int size, int N)
         } 
     }
     MPI_Alltoall(A[rank*numrows], 1, mpi_vector_t, A[rank*numrows], 1, mpi_vector_t, MPI_COMM_WORLD); 
+}
+#endif
+void matrixAsVec(Real **A, int rank, int size, int N, int *displ, int *len, Real *sendBuf)
+{
+    int i, j, k;
+    int count = 0;
+    for (i = 0; i < size; ++i)
+    {
+        for (j = 0; j < len[rank]; ++j)  // number of rows at my rank
+        {
+            for (k = 0; k < len[i]; ++k)   // number Of Rows At Rank i
+            {
+                sendBuf[count] = A[j][displ[i]+k];
+                count++;
+            }
+        }
+    }
+}
+void vecAsMatrix(Real **A, int rank, int size, int N, int *displ, int *len, Real *sendBuf)
+{
+    int i, j, k;
+    int count = 0;
+    for (i = 0; i < size; i++)
+    {
+        for (j = 0; j < len[i]; j++)  //  len[i] number Of Rows At Rank i
+        {
+            for (k = 0; k < len[rank]; k++)   // len[rank] number of rows at my rank
+            {
+                A[k][displ[i]+j] = sendBuf[count];
+                count++;
+            }
+        }
+    }
+}
+#ifdef HAVE_MPI
+void myTranspose(Real **A, int rank, int size, int N, int *len, int *displ)
+{
+    // N is the number of columns in the rows the vector is responsible for
+    Real *sendBuf, *recvBuf;
+    int *sendrecvDispl, *sendcounts, i;
+    sendcounts = calloc(size,sizeof(int));
+    sendrecvDispl = calloc(size,sizeof(int));
+    sendBuf = createRealArray(N*len[rank]); // N*len[rank] = number of elements each process is responsible for
+    recvBuf = createRealArray(N*len[rank]); // sendBuf and recvBuf for MPI_ALltoallv operation
+    matrixAsVec(A, rank, size, N, displ, len, sendBuf);  //little bit grumpy for having to create this my self, due to original framework
+
+    int count = 0;
+    for (i = 0; i < size; ++i)
+    {
+        sendcounts[i] = len[rank]*len[i];
+        sendrecvDispl[i] = count;
+        count = count+sendcounts[i];
+    }
+    
+    MPI_Alltoallv(sendBuf, sendcounts, sendrecvDispl, MPI_DOUBLE, recvBuf, sendcounts, sendrecvDispl, MPI_DOUBLE, MPI_COMM_WORLD);
+    // if (rank==3)
+    // {
+    //     printf("The recvbuf\n");
+    //     printVector2(recvBuf, N * len[rank]);
+    // }
+    vecAsMatrix(A, rank, size, N, displ, len, recvBuf);
 }
 #endif
 
@@ -722,6 +787,11 @@ void appendVector(Vector dest, Vector from, int startpoint, int blocksize)
   memcpy(dest->data +startpoint, from->data, blocksize*blocksize*sizeof(double));
 } 
 
+void appendArray(Real *dest, Real *from, int startpoint, int length)
+{
+    memcpy(dest + startpoint, from, length * sizeof(double));
+}
+
 Real **createReal2DArray (int n1, int n2)
 {
   int i, n;
@@ -746,4 +816,37 @@ Real *createRealArray (int n)
   }
   return (a);
 }
+
+void printVector2(Real *vec, int m)
+{
+    int i = 0;
+    for (i = 0; i < m; i++)
+    {
+        printf(" %lf ", vec[i]);
+    }
+    printf("\n");
+}
+void printVector3(int *vec, int m)
+{
+    int i = 0;
+    for (i = 0; i < m; i++)
+    {
+        printf("    %d  ", vec[i]);
+    }
+    printf("\n");
+}
+
+void printMatrix2(Real **matrix, int m, int n)
+{
+  int i,j;
+    for(i = 0; i < m; i++)
+    {
+        for(j = 0; j < n; j++)
+        {
+            printf("    %lf ", matrix[i][j]);
+        }
+        printf("\n");
+    }
+}
+
 
