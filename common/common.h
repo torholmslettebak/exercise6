@@ -285,6 +285,9 @@ Vector cloneVector(const Vector u);
 //! \returns New clone of matrix 
 Matrix cloneMatrix(const Matrix u);
 
+
+// The following block of methods is a mix of selfwritten functions and modified versions of the methods above
+
 void appendVector(Vector dest, Vector from, int startpoint, int blocksize);
 
 Real *createRealArray (int n);
@@ -305,12 +308,13 @@ void vecAsMatrix(Real **A, int rank, int size, int N, int *displ, int *len, Real
 
 void matrixAsVec(Real **A, int rank, int size, int N, int *displ, int *len, Real *sendBuf);
 
+// Prints realvector of length m, for testing
 void printMatrix2(Real **matrix, int m, int n);
-
+// Prints int vector of length m, for testing
 void printVector3(int *vec, int m);
-
+// Prints real vector of length m, for testing
 void printVector2(Real *vec, int m);
-
+// Appends from array to dest Array
 void appendArray(Real *dest, Real *from, int startpoint, int length);
 
 Real myMaxNorm(Real *vector, int len, int stride, int size, MPI_Comm comm);
