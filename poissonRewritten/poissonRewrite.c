@@ -29,7 +29,7 @@ Real exact(Real x, Real y)
 }
 
 
-Real **assembleMatrix(Real *b_as_vec, Real *finalMatrix_as_vec, int *len, int *displ, int tag, int m, int size)
+void assembleMatrix(Real *b_as_vec, Real *finalMatrix_as_vec, int *len, int *displ, int tag, int m, int size)
 {
 	// b_as_vec is roots own partMatrix
 	if(len[0]>0)

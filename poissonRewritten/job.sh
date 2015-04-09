@@ -4,10 +4,10 @@
 #PBS -N poisson
 
 # Allocate two nodes with 12 processors from the default resources
-#PBS -lnodes=1:ppn=1:default
+#PBS -lnodes=3:ppn=12:default
 
 # Expect to run up to 5 minutes
-#PBS -lwalltime=00:00:30
+#PBS -lwalltime=00:30:00
 
 # Memory per process
 #PBS -lpmem=2000MB
@@ -32,4 +32,10 @@ module load openmpi/1.4.3-intel
 KMP_AFFINITY="granularity=fine,compact"
 
 # Run with 8 MPI processes, each with 3 threads
-OMP_NUM_THREADS=1 mpirun -npernode 1 poisonRewrite 4
+for P in 1 2 4 6 8
+do
+	for T in 3 4 6 8 12
+	do
+		OMP_NUM_THREADS=T mpirun -npernode P poissonRewrite 512
+	done
+done
