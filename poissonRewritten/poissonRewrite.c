@@ -179,11 +179,13 @@ void DiagonalizationPoisson2Dfst(int n, int rank, int size)
 
 	if (rank == 0)
 	{
+		printf("===========================================================\n");
 		printf("Number of cores: %d\n", size);
 		printf("Number of threads per proc: %d\n", omp_get_max_threads());
 		printf("Problem size: %d\n", n);
 		printf("runtime = %lf\n", WallTime()-time1);
 		printf("Error = %e\n", error);	
+		printf("===========================================================\n");
 	}
 }
 
