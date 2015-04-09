@@ -74,7 +74,6 @@ Real* myEquidistantMesh(Real x0, Real x1, int N)
   Real *result = calloc(N+1, sizeof(double));
 
   int i;
-
   for (i=0;i<N+1;++i)
     result[i] = x0+i*h;
 
@@ -105,6 +104,7 @@ void DiagonalizationPoisson2Dfst(int n, int rank, int size)
 	myEvalMeshInternal(e, grid, exact, n, len[rank], rank, displ);
 
 	// Generates the eigenvalues and stores it in diagonal
+#pragma omp parallel for schedule(static)
 	for (int i=0; i < m; i++) 
 	{
 		diag[i] = 2.*(1.-cos((i+1)*M_PI/(Real)n));

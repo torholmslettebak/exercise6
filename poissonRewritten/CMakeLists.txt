@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.6)
 add_subdirectory(../common common)
 # We use the C language
 enable_language(C)
-SET(CMAKE_COMPILER_IS_GNUCC)
+# SET(CMAKE_COMPILER_IS_GNUCC)
 enable_language(Fortran)
 
 add_definitions(${COMMON_DEFINITIONS})

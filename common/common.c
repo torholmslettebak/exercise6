@@ -428,6 +428,7 @@ void evalMeshInternal2(Matrix u, Vector grid, function2D func, int boundary)
 void evalMeshInternal2Arrays(Real **u, Real *grid, function2D func, int N)
 {
     int i, j;
+// #pragma omp parallel for schedule(static)
     for (i = 1; i < N; ++i)
     {
         for (j = 1; j < N; ++j)
