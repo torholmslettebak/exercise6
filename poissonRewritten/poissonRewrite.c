@@ -55,18 +55,18 @@ void matrixToVec(Real *toVec, Real **matrix, int rows, int cols)
 	}
 }
 
-	double generateError(Real *localVec, Real *exactVec, int m, int rank, int *len)
-	{
+double generateError(Real *localVec, Real *exactVec, int m, int rank, int *len)
+{
 		// now to find local max local error
-		Real localError, globalError;
-		double alpha = -1.0;
-		int stride = 1;
-		myaxpy(localVec, exactVec, alpha, m*len[rank], stride);
-		localError = myMaxNorm(localVec, m*len[rank], 1, 1, SelfComm);
+	Real localError, globalError;
+	double alpha = -1.0;
+	int stride = 1;
+	myaxpy(localVec, exactVec, alpha, m*len[rank], stride);
+	localError = myMaxNorm(localVec, m*len[rank], 1, 1, SelfComm);
 		// Now to find global error through MPI_Reduce
-		MPI_Reduce(&localError, &globalError, 1, MPI_DOUBLE, MPI_MAX, 0, WorldComm);
-		return globalError;
-	}	
+	MPI_Reduce(&localError, &globalError, 1, MPI_DOUBLE, MPI_MAX, 0, WorldComm);
+	return globalError;
+}	
 
 Real* myEquidistantMesh(Real x0, Real x1, int N)
 {
