@@ -5,7 +5,9 @@ problemsize = [4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384];
 h = 1 ./ problemsize;
 
 plot(log(h), log(errors));
-
+title ("Konvergence test, for n = 4 .. 16384, with constant system");
+xlabel ("log(h)");
+ylabel ("Max pointwise error");
 % logh = log(h); loge = log(errors);
 
 % xstart = logh(1); xend = logh(end);

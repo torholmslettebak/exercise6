@@ -32,10 +32,10 @@ module load openmpi/1.4.3-intel
 KMP_AFFINITY="granularity=fine,compact"
 
 # Run with 8 MPI processes, each with 3 threads
-for P in 1 2 4 6 8
+for P in 1 2 4 6 8 12
 do
-	for T in 3 4 6 8 12
+	for N in 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384
 	do
-		OMP_NUM_THREADS=$T mpirun -npernode $P poissonRewrite 512
+		OMP_NUM_THREADS=1 mpirun -npernode $P poissonRewrite $N
 	done
 done
