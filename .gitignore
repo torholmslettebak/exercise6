@@ -1,5 +1,9 @@
 #*.[oa]
 *~
+*.aux
+.out
+.log
+.pdf
 _build/
 CMakeFiles/
 release/
