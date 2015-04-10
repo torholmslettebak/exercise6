@@ -1,0 +1,40 @@
+aquired MPI threading level: MPI_THREAD_SINGLE
+===========================================================
+Number of cores: 1
+Number of threads per proc: 1
+Problem size: 2048
+runtime = 10.244505
+Error = 6.667092e-07
+===========================================================
+aquired MPI threading level: MPI_THREAD_SINGLE
+===========================================================
+Number of cores: 1
+Number of threads per proc: 2
+Problem size: 2048
+runtime = 5.691899
+Error = 6.667092e-07
+===========================================================
+aquired MPI threading level: MPI_THREAD_SINGLE
+===========================================================
+Number of cores: 1
+Number of threads per proc: 3
+Problem size: 2048
+runtime = 4.184082
+Error = 6.667092e-07
+===========================================================
+aquired MPI threading level: MPI_THREAD_SINGLE
+===========================================================
+Number of cores: 1
+Number of threads per proc: 4
+Problem size: 2048
+runtime = 3.388541
+Error = 6.667092e-07
+===========================================================
+aquired MPI threading level: MPI_THREAD_SINGLE
+===========================================================
+Number of cores: 1
+Number of threads per proc: 6
+Problem size: 2048
+runtime = 2.621776
+Error = 6.667092e-07
+===========================================================
