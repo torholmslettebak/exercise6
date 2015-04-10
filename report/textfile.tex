@@ -1,7 +1,23 @@
 
 
 \section{The poisson program}
-In the beginning I tried to take advantage of our professors framework of several poisson solvers, which uses vectors and matrices in Fortran format. This however turned out to be hard for me. When I tried to create a transpose operation in parallel I could not make it work. So I made a switched to the code distributed with the problemtext, which is written by Einar M. Rønquist. 
+In the beginning I tried to take advantage of our professors framework of several poisson solvers, which uses vectors and matrices in Fortran format. This however turned out to be hard for me. When I tried to create a transpose operation in parallel I could not make it work. So I made a switched to the code distributed with the problemtext, which is written by Einar M. Ronquist. 
+\subsection{The poisson equation}
+The program is to solve the Poisson equation 
+\begin{equation}
+-\nabla^2u = f,	in \Omega = (0,1)\times(0,1)
+\end{equation}
+\begin{equation}
+u = 0 \text{	on 	} \partial\Omega
+\end{equation}
+To solve this equation it needs to be translated to a numberical scheme. It needs discretization. A Taylor expansion on the equation gives us 
+\begin{equation}
+u_{xx} \approx \frac{1}{h^2}(u(x+h,y) - 2u(x,y) 0 u(x-h,y))
+\end{equation}
+Doing this in the y-direction as well we get the discretization of the Poisson equaion in form of the 5 point stencil.
+\begin{equation}
+-u(x+h,y) - u(x,y+h) - u(x-h,y) - u(x,y-h) + 4u(x,y) = h^2 f(x,y)
+\end{equation}
 
 \section{Parallelization}
 To parallelize the problem I chose to split up the problem in lesser parts, each solvable by it self. Each process generates it own matrix B, and modifies it through the program, before it shares it result with each of the other processes and the maximal error is calculated. During each process' execution the only communication, except for in assembly, between the threads are done in the transpose operation.
@@ -80,7 +96,7 @@ However, tests performed with only one MPI process and a increasing number of th
 \end{figure}
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[trim ={24mm 24mm 24mm 24mm}, clip, width=0.8\textwidth]{MPI_vs_runtime}
+	\includegraphics[width=0.8\textwidth]{MPI_vs_runtime}
 	\caption{MPI processes vs runtime, for one thread}
 	\label{fig:MPInruntime}
 \end{figure}
@@ -89,5 +105,19 @@ Similarly for an equivalent setup with MPI processes. We see almost similar resu
 
 
 \section{Speedup and parallel efficiency}
-
-
+The speedup for the program is calculated with
+\begin{equation}
+S_p = \frac{T_1}{T_p}
+\end{equation}
+$T_1$ being the execution time for the sequential version of the program, $T_p$ is the time it takes to run the program in parallel using p processors. 
+Calculating this speedup gives us the possibility to calculate an estimate of the parallel efficiency 
+\begin{equation}
+\eta_p = \frac{S_p}{p}
+\end{equation}
+The general speed for the program when executed with equal input, but for a various number of MPI processes, can be seen in the following plot[fig:\ref{fig:runtime}].
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.8\textwidth]{runtimeTest}
+	\caption{runtime for different number of processes, with one thread}
+	\label{fig:runtime}
+\end{figure}
