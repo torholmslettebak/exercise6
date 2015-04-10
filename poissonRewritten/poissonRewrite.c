@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
 	// start MPI
 	MPI_Status status;
 	init_app(argc, argv, &rank, &size);
-	if( isPowerOfTwo(n) !=1)
+	if( argc < 2)
 	{
 		// n needs to be a power of 2
 		printf("need a problem size\n");
