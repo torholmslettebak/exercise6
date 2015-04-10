@@ -4,7 +4,7 @@
 #PBS -N poisson
 
 # Allocate two nodes with 12 processors from the default resources
-#PBS -lnodes=1:ppn=1:default
+#PBS -lnodes=3:ppn=12:default
 
 # Expect to run up to 5 minutes
 #PBS -lwalltime=00:40:00
