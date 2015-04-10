@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Name job 'poisson'
+# Name job 'poissonSequential'
 #PBS -N poisson
 
 # Allocate two nodes with 12 processors from the default resources
-#PBS -lnodes=3:ppn=12:default
+#PBS -lnodes=1:ppn=1:default
 
 # Expect to run up to 5 minutes
-#PBS -lwalltime=00:30:00
+#PBS -lwalltime=00:40:00
 
 # Memory per process
 #PBS -lpmem=2000MB
@@ -32,10 +32,7 @@ module load openmpi/1.4.3-intel
 KMP_AFFINITY="granularity=fine,compact"
 
 # Run with 8 MPI processes, each with 3 threads
-for P in 1 2 4 6 8 12
+for N in 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384
 do
-	for N in 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384
-	do
-		OMP_NUM_THREADS=1 mpirun -npernode $P poissonRewrite $N
-	done
+	OMP_NUM_THREADS=1 mpirun -npernode 1 poissonRewrite $N
 done
