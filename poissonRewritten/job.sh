@@ -36,6 +36,6 @@ for P in 1 2 4 6 8
 do
 	for T in 3 4 6 8 12
 	do
-		OMP_NUM_THREADS=T mpirun -npernode P poissonRewrite 512
+		OMP_NUM_THREADS=$T mpirun -npernode $P poissonRewrite 512
 	done
 done

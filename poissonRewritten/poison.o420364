@@ -1,0 +1,9 @@
+Warning: Permanently added 'compute-0-12' (RSA) to the list of known hosts.
+aquired MPI threading level: MPI_THREAD_SINGLE
+===========================================================
+Number of cores: 1
+Number of threads per proc: 1
+Problem size: 4
+runtime = 0.198060
+Error = 1.927711e-01
+===========================================================

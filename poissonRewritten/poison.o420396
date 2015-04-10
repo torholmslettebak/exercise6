@@ -1,0 +1,13 @@
+Warning: Permanently added 'compute-0-28' (RSA) to the list of known hosts.
+chown: cannot access `/state/partition1/scratch/pbstmp.420396.rocks.hpc.ntnu.no': No such file or directory
+Warning: Permanently added 'compute-0-29' (RSA) to the list of known hosts.
+chown: cannot access `/state/partition1/scratch/pbstmp.420396.rocks.hpc.ntnu.no': No such file or directory
+Warning: Permanently added 'compute-1-0' (RSA) to the list of known hosts.
+aquired MPI threading level: MPI_THREAD_SINGLE
+===========================================================
+Number of cores: 36
+Number of threads per proc: 6
+Problem size: 16384
+runtime = 33.906870
+Error = 8.887468e-09
+===========================================================
