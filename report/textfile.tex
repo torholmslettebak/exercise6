@@ -30,7 +30,14 @@ For a time I also assembled the final solution matrix on the root process using 
 
 \subsection{Use of OpenMP}
 To further increase the parallelization of the program OpenMP can be used. This enables the program's MPI processes to use more than one thread in it's execution. 
-The main (perhaps only) use of extra threads in this program is when performing the fourier transformations.
+The main (perhaps only) use of extra threads in this program is when performing the fourier transformations. This means adding a 
+\begin{lstlisting}
+#pragma omp parallel for schedule(static) private(buf)
+\end{lstlisting}
+before the various Fortran fourier transformations. This means that each MPI process can perform the fourier transforms with increased degree of parallelization. One drawback with use of OpenMP on these parts of the program is that the fortran procedures requires a buffer. This leads to the requirement of each thread having it's own buffer. This means an increase in memory requirement for the program, due to an increased size of buffer matrix z.
+
+Possible speedup with use of OpenMP will be discussed in result section(INCLUDE REFERENCE TO IT). 
+
 
 
 \section{Kongull}
