@@ -1,0 +1,19 @@
+Warning: Permanently added 'compute-0-21' (RSA) to the list of known hosts.
+chown: cannot access `/state/partition1/scratch/pbstmp.420717.rocks.hpc.ntnu.no': No such file or directory
+chown: cannot access `/state/partition1/scratch/pbstmp.420717.rocks.hpc.ntnu.no': No such file or directory
+aquired MPI threading level: MPI_THREAD_SINGLE
+===========================================================
+Number of cores: 36
+Number of threads per proc: 1
+Problem size: 16384
+runtime = 34.260577
+Error = 8.887468e-09
+===========================================================
+aquired MPI threading level: MPI_THREAD_SINGLE
+===========================================================
+Number of cores: 6
+Number of threads per proc: 6
+Problem size: 16384
+runtime = 44.608748
+Error = 8.887468e-09
+===========================================================
